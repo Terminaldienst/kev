@@ -13306,5 +13306,278 @@
       0
     ],
     "scale": -100
+  },
+  {
+    "printed": "102.1",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "1",
+      "p50_ms"
+    ]
+  },
+  {
+    "printed": "112.2",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "1",
+      "p99_ms"
+    ]
+  },
+  {
+    "printed": "9.8",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "1",
+      "rps"
+    ]
+  },
+  {
+    "printed": "902.0",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "32",
+      "p50_ms"
+    ]
+  },
+  {
+    "printed": "1177.7",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "32",
+      "p99_ms"
+    ]
+  },
+  {
+    "printed": "35.6",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "32",
+      "rps"
+    ]
+  },
+  {
+    "printed": "956.4",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "64",
+      "p50_ms"
+    ]
+  },
+  {
+    "printed": "3402.7",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "64",
+      "p99_ms"
+    ]
+  },
+  {
+    "printed": "53.4",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "64",
+      "rps"
+    ]
+  },
+  {
+    "printed": "36.9",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "direct",
+      "levels",
+      "1",
+      "p50_ms"
+    ]
+  },
+  {
+    "printed": "40.4",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "direct",
+      "levels",
+      "1",
+      "p99_ms"
+    ]
+  },
+  {
+    "printed": "26.7",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "direct",
+      "levels",
+      "1",
+      "rps"
+    ]
+  },
+  {
+    "printed": "598.7",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "direct",
+      "levels",
+      "32",
+      "p50_ms"
+    ]
+  },
+  {
+    "printed": "911.9",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "direct",
+      "levels",
+      "32",
+      "p99_ms"
+    ]
+  },
+  {
+    "printed": "51.2",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "direct",
+      "levels",
+      "32",
+      "rps"
+    ]
+  },
+  {
+    "printed": "620.9",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "direct",
+      "levels",
+      "64",
+      "p50_ms"
+    ]
+  },
+  {
+    "printed": "2823.4",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "direct",
+      "levels",
+      "64",
+      "p99_ms"
+    ]
+  },
+  {
+    "printed": "73.2",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "direct",
+      "levels",
+      "64",
+      "rps"
+    ]
+  },
+  {
+    "printed": "128",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "1",
+      "requests"
+    ]
+  },
+  {
+    "printed": "256",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "32",
+      "requests"
+    ]
+  },
+  {
+    "printed": "512",
+    "in": [
+      "README.md"
+    ],
+    "source": "runs/modal-http-readme-4b-h100/report.json",
+    "path": [
+      "asgi",
+      "levels",
+      "64",
+      "requests"
+    ]
   }
 ]

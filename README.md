@@ -216,12 +216,14 @@ uv run --extra serve python -m kev.serve --run runs/mine --port 8009
 To get an HTTPS endpoint instead of a local server, you don't need this repo, just a [Modal](https://modal.com) account:
 
 ```bash
-pip install modal && modal setup
+pip install modal==1.5.5 && modal setup
 curl -LO https://raw.githubusercontent.com/jaredpalmer/kev/main/skills/kev-deploy/scripts/kev_serve.py
 KEV_API_KEY=$(openssl rand -hex 24) modal deploy kev_serve.py
 ```
 
 That serves Kev-4B on an L40S at `https://<your-workspace>--kev-api.modal.run`, with the same API as above behind `Authorization: Bearer <key>`. It scales to zero when idle, so an unused endpoint costs nothing. The first request after idle waits about 35 seconds for a container to start. `KEV_MODEL=jaredpalmer/kev-9b` serves another model on the GPU that suits it; Kev-27B goes to a B200, falling back to an H200 or H100. If you use a coding agent, `npx skills add jaredpalmer/kev@kev-deploy` does the same and wires the URL into your code. [skills/kev-deploy](skills/kev-deploy/) has the GPU and cost table.
+
+For lower warm HTTP latency, add `KEV_FLASH=1 KEV_REGION=us-east` to the deployment command. This uses Modal's direct server with a 64-request concurrency target instead of the regular web endpoint's 32-request target; it returns a different URL and keeps at least one paid GPU container warm, even when idle. The API and bearer authentication stay the same. [Modal HTTP Performance](#modal-http-performance) separates end-to-end latency from model time.
 
 A model you fine-tuned with the `kev-finetune` skill deploys the same way from its own Modal app (`KEV_SERVE_SECRET=kev-serve-key KEV_SERVE_RUN=<run> modal deploy scripts/kev_modal.py`; see [its deploy guide](skills/kev-finetune/references/deploy.md)). To host Kev on your own machines instead, run `kev.serve` from [Run It Locally](#run-it-locally) on a GPU box with `--host 0.0.0.0` and put it behind your own proxy; [Serving Performance](#serving-performance) says which GPU to pick.
 
@@ -294,7 +296,7 @@ Send the ticket from [Run It Locally](#run-it-locally) to port 8000; an `answers
 
 **Confidence.** Each checkpoint ships with a fitted temperature, so its probabilities are calibrated by default. As served, Kev-9B puts at least 0.9 probability on a wrong answer for 2.4% of new-source questions, against Jev's 3.7%. Jev still ranks its answers better: at a 5% error budget, Kev-4B, 9B and 27B can automate 0.52–0.69 of new-source decisions, Kev-0.8B 0.14 and Jev 0.70. Check a threshold on your own data before you rely on it.
 
-**Speed.** Kev-4B answers six questions about a new short text in 18.1 ms of model time on an H100 and 41.5 ms on an L40S, and a container serves around 101 requests per second on an H100. On an Apple M5, Kev-4B takes 721 ms for five questions, or 136 ms when the text repeats and comes from the cache. [Serving Performance](#serving-performance) has every GPU and batch size.
+**Speed.** Kev-4B answers six questions about a new short text in 18.1 ms of model time on an H100 and 41.5 ms on an L40S, and its in-process server handles around 101 requests per second on an H100, before HTTP overhead. On an Apple M5, Kev-4B takes 721 ms for five questions, or 136 ms when the text repeats and comes from the cache. [Serving Performance](#serving-performance) has the GPU measurements and [Modal HTTP Performance](#modal-http-performance) has deployed request latency.
 
 **Length.** Kev-0.8B, 4B and 9B trained mostly on states of up to 384 tokens, with longer ones in their document and skill fine-tunes (up to 7,552 tokens), Kev-27B on states of up to 32,768. The server accepts states of up to 65,536 tokens, and 8,192 more for each question, and refuses a longer one with a 422 instead of cutting it. How far past its training length each model stays accurate is the "Validated context" column in [Models](#models). For Kev-0.8B, 4B and 9B that is 8,192 tokens: at 16k the measurement on real contracts can no longer rule out a drop of more than 3 points, and at 32k all three are measurably less accurate than at 8k. Kev-27B holds to the 65,536-token limit. On real contracts of up to 64k tokens (CUAD) Kev-27B scores 0.874, and its confidence there is less reliable than on short text; its [model card](docs/model-cards/kev-27b.md) has the numbers by length.
 
@@ -470,7 +472,7 @@ Pick the GPU by the model:
 | Kev-27B | H200 (4.54) | 67.2 / 50.0 ms | 274.8 / 73.8 ms | 28.6 |
 | Kev-27B | H100 (3.95) | 75.0 / 52.0 ms | 277.5 / 79.3 ms | 28.9 |
 
-Times are model time per request (the `latency_ms` the API returns), median of 20, for a new text / the same text again. The server caches the text, so asking more questions about a document you've already sent only pays for the questions. Requests per second are for 64 concurrent clients sending six questions about a new short text each; the server batches them. Kev-27B's B200 and H100 rows were measured on its previous version, the same architecture served in bf16 (`runs/fused-27b-*`); the H200 row is the current checkpoint (`runs/serving-27b-r23`). Network time is extra: about 65 ms per round trip through a Modal web endpoint in the same region.
+Times are model time per request (the `latency_ms` the API returns), median of 20, for a new text / the same text again. The server caches the text, so asking more questions about a document you've already sent only pays for the questions. Requests per second are in-process measurements for 64 concurrent clients sending six questions about a new short text each; the server batches them. Kev-27B's B200 and H100 rows were measured on its previous version, the same architecture served in bf16 (`runs/fused-27b-*`); the H200 row is the current checkpoint (`runs/serving-27b-r23`). These measurements exclude HTTP transport; see [Modal HTTP Performance](#modal-http-performance) for deployed latency and throughput.
 
 An L4 is enough for Kev-0.8B but too slow for Kev-4B. The A100 is slower than the L40S here and costs more. Kev-9B needs about 17 GB of GPU memory and Kev-27B 51 GB of weights (about 66 GB with the batching buffers); under load Kev-27B is compute-bound, and a B200, H200 or H100 costs about the same per request. On CUDA, install `flash-linear-attention` for the Qwen3.5 models (`kev_serve.py` and the Modal images already do).
 
@@ -486,6 +488,23 @@ Long documents are read into the cache 1,024 tokens at a time, so memory stays c
 Adapter checkpoints are folded into the base as they load, which briefly holds a second copy of the weights. Full-weight checkpoints like Kev-27B load as saved, with nothing merged, so loading needs only the weights. We checked this on Kev-4B written out as full bf16 weights: loading peaked at 8.4 GB for 8.4 GB of weights, against 15.9 GB for the adapter path. Its answers matched the adapter path exactly once both hold the same bf16 values, and stayed within 0.015 of the fp32 path on 60 questions (`runs/mlx-full-4b`). Kev-27B's weights are 51 GB. By the same measurements it needs about 51 GB plus working memory, so a 64 GB Mac is borderline and a 96–128 GB Mac should fit. We haven't run it on a Mac that large yet. Kev-27B's first version, an adapter, did run this way on a 128 GB M5 Max, matching the published accuracy (thanks to Sean Connelly, [#175](https://github.com/jaredpalmer/kev/pull/175)).
 
 The server runs in bf16 on GPUs and Macs. Its probabilities differ from the fp32 path the published evaluations use by at most about 0.03 on a GPU and 0.05 on a Mac, and the top answer changes on about one question in 300. Set `KEV_DTYPE=fp32` for the exact path. `/v1/models` reports the backend and precision in use. `uv run modal run modal_app.py::serving --run jaredpalmer/kev-4b --gpu L40S --name <name>` measures a row of the table on your own account (the rows above: `runs/serve-*`, `runs/grouping-4b-h100`, `runs/fused-27b-*`, `runs/serving-27b-r23`).
+
+### Modal HTTP Performance
+
+End-to-end warm HTTP latency, including transport and queueing, is different from model time. This paired run used Kev-4B, one H100 and four CPUs per endpoint in `us-east`, kept-alive clients in the same region, bearer authentication, and six questions about a new short text per request. After warm-up, each mode handled 128 timed requests at one client, 256 at 32 clients, and 512 at 64 clients:
+
+| Modal endpoint | Concurrent clients | HTTP p50 (ms) | HTTP p99 (ms) | Requests/s |
+|---|---|---|---|---|
+| Regular web | 1 | 102.1 | 112.2 | 9.8 |
+| Direct server | 1 | 36.9 | 40.4 | 26.7 |
+| Regular web | 32 | 902.0 | 1177.7 | 35.6 |
+| Direct server | 32 | 598.7 | 911.9 | 51.2 |
+| Regular web | 64 | 956.4 | 3402.7 | 53.4 |
+| Direct server | 64 | 620.9 | 2823.4 | 73.2 |
+
+The direct server bypasses Modal's Function input queue; it does not change the model path or the in-process measurements above. All timed HTTP requests succeeded, sample answer payloads matched, and bearer-authentication, validation and TypeSafe SDK checks passed. These are short warm runs, not a tail-latency SLA: new batch shapes still captured CUDA graphs during the measurement, and latency depends on the workload and client location. The concurrency target controls scaling, not requests per second.
+
+Enable the direct path with `KEV_FLASH=1 KEV_REGION=us-east` (also `KEV_GPU=H100` to use the GPU measured here); it keeps at least one paid container warm instead of scaling to zero. [The report](runs/modal-http-readme-4b-h100/report.json) includes checkpoint and kernel provenance, process/model latency and graph counts. Reproduce it with `uv run --extra serve modal run scripts/modal_http_bench.py --out runs/modal-http-readme-4b-h100 --levels 1,32,64`; [the deployment guide](skills/kev-deploy/SKILL.md#throughput) covers the earlier comparison and deployment-script smoke check.
 
 ## Limitations
 
